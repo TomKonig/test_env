@@ -451,7 +451,7 @@
 async function fromSymbol(name, color) {
   const g = document.createElementNS(svgNS, 'g');
   try {
-    const res = await fetch(`/icons/${name}.svg`);
+    const res = await fetch(`icons/${name}.svg`);
     const svgText = await res.text();
     const temp = document.createElement('div');
     temp.innerHTML = svgText;
@@ -468,5 +468,7 @@ async function fromSymbol(name, color) {
   }
   return g;
 }
-</script></body>
+})();                  <!-- close the IIFE -->
+</script>
+</body>
 </html>
