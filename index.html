@@ -259,12 +259,6 @@
   0%   { stroke-dashoffset: 0; }
   100% { stroke-dashoffset: -28; }
 }
-  100% { stroke-dashoffset: 0; }
-}
-  to {
-    stroke-dashoffset: 0;
-  }
-}
 </style></head>
 <body>
 <div aria-hidden="true" class="page-bg"></div>
@@ -434,6 +428,107 @@
     drawArcUnderWord("altid", "#hero-title");
   });
 })();
+
+(function(){
+  const cta = document.getElementById('cta');
+  const btn = cta.querySelector('.actions .btn, .actions button');
+  const eyebrow = cta.querySelector('.eyebrow');
+  const qWrap = cta.querySelector('.qz-area');
+  const qText = cta.querySelector('#qzText');
+  const qAns  = cta.querySelector('#qzAnswers');
+  if(!btn || !qWrap) return;
+
+  const QUESTIONS = [
+    { q: 'Hvem skal forkæles?', a: ['Min partner','En forælder','En søskende','En ven/kollega'] },
+    { q: 'Hvad er cirka budgettet?', a: ['Under 250 kr.','250–500 kr.','500–1.000 kr.','1.000+ kr.'] }
+  ];
+
+  function setEyebrow(i){
+    if(eyebrow){ eyebrow.textContent = 'Spørgsmål ' + (i+1); }
+  }
+  function caret(on){
+    if(on){
+      if(!qText.querySelector('.qz-caret')){
+        const c=document.createElement('span'); c.className='qz-caret'; qText.appendChild(c);
+      }
+    }else{
+      const c=qText.querySelector('.qz-caret'); c && c.remove();
+    }
+  }
+  function typeIn(text, speed){
+    return new Promise(resolve=>{
+      qText.textContent = '';
+      let i=0;
+      (function step(){
+        if(i<text.length){
+          qText.textContent += text[i++];
+          setTimeout(step, speed);
+        } else {
+          caret(true);
+          resolve();
+        }
+      })();
+    });
+  }
+  function backspaceAll(speed){
+    return new Promise(resolve=>{
+      caret(false);
+      (function step(){
+        const t = qText.textContent;
+        if(t.length){
+          qText.textContent = t.slice(0,-1);
+          setTimeout(step, speed);
+        } else {
+          resolve();
+        }
+      })();
+    });
+  }
+
+  function showAnswers(list){
+    qAns.classList.remove('qz-fade-out');
+    qAns.innerHTML='';
+    list.forEach((label, i)=>{
+      const b = document.createElement('button');
+      b.type='button'; b.className='qz-pill'; b.innerHTML = '<span>'+label+'</span>';
+      b.style.opacity='0'; b.style.transform='translateY(6px)';
+      b.addEventListener('click', ()=> onSelect(b));
+      qAns.appendChild(b);
+      setTimeout(()=>{
+        b.style.transition='opacity .35s ease, transform .35s ease';
+        b.style.opacity='1'; b.style.transform='translateY(0)';
+      }, 100*i + 120);
+    });
+  }
+
+  async function onSelect(btn){
+    Array.from(qAns.children).forEach(b => b.classList.toggle('qz-selected', b===btn));
+    qAns.classList.add('qz-fade-out');
+    await backspaceAll(22);
+    next();
+  }
+
+  let index = 0;
+  async function next(){
+    if(index >= QUESTIONS.length){
+      caret(false);
+      qText.textContent = 'Tak! Vi finder gaver til dig …';
+      qAns.innerHTML='';
+      return;
+    }
+    const {q, a} = QUESTIONS[index++];
+    setEyebrow(index-1);
+    await typeIn(q, 48);    // slightly slower typing
+    showAnswers(a);
+  }
+
+  btn.addEventListener('click', ()=>{
+    cta.classList.add('qz-active');
+    qWrap.style.display='block';
+    index = 0;
+    next();
+  }, {once:true});
+})();
 </script>
 <script>
     (function(){
@@ -485,6 +580,7 @@
     }
   }
   spawnIcons();
+  
 })();                  <!-- close the IIFE -->
 </script>
 </body>
