@@ -532,97 +532,159 @@
 </script>
 <script>
 (function(){
+  // Using the 19 new icons, not the 4 old symbols
   const ICONS = Array.from({ length: 19 }, (_, i) => i + 1);
   const COLORS = ["#FFD86B","#FF5DB1","#8A5CFF","#5BE2FF"];
   const layer = document.getElementById('icon-layer');
   const svgNS = "http://www.w3.org/2000/svg";
   const CFG = { count: 7, minSize: 42, maxSize: 60, speed: 10, turnMax: 0.35, noise: 0.18, sepPad: 6, off: 80, fadeMs: 700 };
+  const icons = [];
   let VW = innerWidth, VH = innerHeight;
-
-  function resize(){ VW = Math.max(1, innerWidth); VH = Math.max(1, innerHeight); layer.setAttribute('viewBox', `0 0 ${VW} ${VH}`); }
-  addEventListener('resize', resize);
-  addEventListener('orientationchange', resize);
-  resize();
-
+  
+  function resize(){ VW = Math.max(1, innerWidth); VH = Math.max(1, innerHeight); /* No viewBox on layer */ }
+  addEventListener('resize', resize); addEventListener('orientationchange', resize); resize();
+  
   const rand = (a,b)=> a + Math.random()*(b-a);
   const pick = a => a[Math.floor(Math.random()*a.length)];
 
   /**
-   * Fetches an SVG file, extracts its content into a <g> element,
-   * and returns both the content and the original viewBox.
-   * @param {string} name - The icon number (e.g., '1').
-   * @param {string} color - The color to apply to the icon.
-   * @returns {Promise<{content: SVGGElement, viewBox: string|null}>}
+   * Fetches, creates, and spawns a single animated icon using external SVG files.
+   * This combines the logic from both of your previous scripts.
    */
-  async function createIconGroup(name, color) {
-    const g = document.createElementNS(svgNS, 'g');
-    let viewBox = null;
+  async function spawn(mode="edge") {
     try {
-      const res = await fetch(`icons/${name}.svg`);
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      
-      const svgText = await res.text();
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(svgText, "image/svg+xml");
-      const fetchedSvg = doc.documentElement;
-
-      // Grab the viewBox from the original file
-      viewBox = fetchedSvg.getAttribute('viewBox');
-
-      // Transfer children from the fetched SVG to the new group
-      while(fetchedSvg.firstChild) {
-        const child = fetchedSvg.firstChild;
-        // Remove hardcoded fill/stroke to allow CSS colors to apply
-        if (child.nodeType === 1) { // Ensure it's an element
-            child.removeAttribute('fill');
-            child.removeAttribute('stroke');
-            child.querySelectorAll('[fill]').forEach(el => el.removeAttribute('fill'));
-            child.querySelectorAll('[stroke]').forEach(el => el.removeAttribute('stroke'));
-        }
-        g.appendChild(child);
-      }
-      
-      // Apply the desired color to the group
-      g.setAttribute('fill', color);
-      g.setAttribute('stroke', color);
-
-    } catch (e) {
-      console.error("Failed to load or process /icons/" + name + ".svg", e);
-    }
-    return { content: g, viewBox: viewBox };
-  }
-
-  /**
-   * Creates and places icons on the page.
-   */
-  async function spawnIcons() {
-    for (let i = 0; i < CFG.count; i++) {
       const name = pick(ICONS);
       const color = pick(COLORS);
       
-      // 1. Create the <svg> container element FIRST.
-      const svg = document.createElementNS(svgNS, 'svg');
-      const size = rand(CFG.minSize, CFG.maxSize);
-      svg.setAttribute('width', size);
-      svg.setAttribute('height', size);
+      // Fetch the SVG data
+      const res = await fetch(`icons/${name}.svg`);
+      if (!res.ok) throw new Error(`SVG fetch failed: ${res.status}`);
+      const svgText = await res.text();
       
-      // 2. Add it to the DOM.
-      layer.appendChild(svg);
+      // Parse the fetched SVG
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(svgText, "image/svg+xml");
+      const fetchedSvg = doc.documentElement;
+      const viewBox = fetchedSvg.getAttribute('viewBox');
 
-      // 3. Fetch the icon data (content and viewBox).
-      const iconData = await createIconGroup(name, color);
+      // Create the new <svg> element that will be animated
+      const el = document.createElementNS(svgNS, 'svg');
+      el.setAttribute('viewBox', viewBox);
+      el.style.position = 'absolute'; // Position for animation
 
-      // 4. NOW apply the viewBox and append the content.
-      if (iconData.viewBox) {
-        svg.setAttribute('viewBox', iconData.viewBox);
+      // Transfer content, removing hardcoded colors
+      while(fetchedSvg.firstChild) {
+          const child = fetchedSvg.firstChild;
+          if (child.nodeType === 1) { // Is an element
+              child.querySelectorAll('[fill]').forEach(f => f.removeAttribute('fill'));
+              child.querySelectorAll('[stroke]').forEach(s => s.removeAttribute('stroke'));
+          }
+          el.appendChild(child);
       }
-      if (iconData.content) {
-        svg.appendChild(iconData.content);
+      el.setAttribute('fill', color);
+      
+      // Use the physics logic from the old animation script
+      const size = Math.round(rand(CFG.minSize, CFG.maxSize));
+      el.style.width = size + 'px';
+      el.style.height = size + 'px';
+
+      const r = size / 2;
+      let x, y, thetaBase;
+
+      if (mode === "initial") {
+        x = rand(20, VW - 20 - size);
+        y = rand(20, VH - 20 - size);
+        thetaBase = rand(-Math.PI, Math.PI);
+      } else { // "edge"
+        const side = pick(["left", "right", "top", "bottom"]);
+        const off = CFG.off;
+        if (side === "left") { x = -size - off; y = rand(20, VH - 20); }
+        else if (side === "right") { x = VW + off; y = rand(20, VH - 20); }
+        else if (side === "top") { y = -size - off; x = rand(20, VW - 20); }
+        else { y = VH + off; x = rand(20, VW - 20); }
+        const aimX = rand(VW * 0.2, VW * 0.8), aimY = rand(VH * 0.2, VH * 0.8);
+        thetaBase = Math.atan2(aimY - y, aimX - x);
+      }
+
+      el.style.opacity = '0';
+      el.style.transform = `translate(${x}px, ${y}px)`;
+      layer.appendChild(el);
+      requestAnimationFrame(() => el.style.opacity = String(getComputedStyle(document.documentElement).getPropertyValue('--icon-opacity') || .62));
+
+      // Create the icon object for the animation loop
+      const icon = { el, name, color, x, y, r, size, theta: thetaBase, omega: rand(-CFG.turnMax * 0.2, CFG.turnMax * 0.2), targetOmega: 0 };
+      icons.push(icon);
+
+    } catch (e) {
+      console.error("Failed to spawn icon:", e);
+    }
+  }
+
+  function despawn(icon) {
+    icon.el.style.opacity = '0';
+    setTimeout(() => {
+      if (icon.el && icon.el.parentNode) {
+        icon.el.parentNode.removeChild(icon.el);
+      }
+    }, CFG.fadeMs);
+    const i = icons.indexOf(icon);
+    if (i >= 0) icons.splice(i, 1);
+    spawn("edge"); // Respawn a new one
+  }
+
+  function separate() {
+    for (let i = 0; i < icons.length; i++) {
+      for (let j = i + 1; j < icons.length; j++) {
+        const a = icons[i], b = icons[j];
+        const dx = (b.x + b.r) - (a.x + a.r);
+        const dy = (b.y + b.r) - (a.y + a.r);
+        const d = Math.hypot(dx, dy) || 0.0001;
+        const minD = (a.r + b.r) + CFG.sepPad;
+        if (d < minD) {
+          const nx = dx / d, ny = dy / d;
+          const push = (minD - d) * 0.5;
+          a.x -= nx * push; a.y -= ny * push;
+          b.x += nx * push; b.y += ny * push;
+        }
       }
     }
   }
 
-  spawnIcons();
+  function step(dt) {
+    separate();
+    const off = CFG.off;
+    for (const a of icons) {
+      a.targetOmega += (Math.random() - 0.5) * CFG.noise * dt;
+      a.targetOmega = Math.max(-CFG.turnMax, Math.min(CFG.turnMax, a.targetOmega));
+      a.omega += (a.targetOmega - a.omega) * 0.08;
+      a.theta += a.omega * dt;
+      const vx = Math.cos(a.theta) * CFG.speed;
+      const vy = Math.sin(a.theta) * CFG.speed;
+      a.x += vx * dt;
+      a.y += vy * dt;
+      
+      // Animate using CSS transform for better performance
+      a.el.style.transform = `translate(${a.x}px, ${a.y}px)`;
+
+      if (a.x + a.size < -off || a.x > VW + off || a.y + a.size < -off || a.y > VH + off) {
+        despawn(a);
+      }
+    }
+  }
+
+  // Initial spawn
+  for (let i = 0; i < CFG.count; i++) spawn("initial");
+
+  // Animation loop
+  let last = performance.now();
+  function loop(now) {
+    const dt = Math.min(0.04, (now - last) / 1000);
+    last = now;
+    step(dt);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
 })();
 </script>
 </body>
