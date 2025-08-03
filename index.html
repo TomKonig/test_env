@@ -17,6 +17,31 @@
       --radius: 20px;
       --icon-opacity: .62;
     }
+    #loader {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+    .spinner {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        border: 8px solid #f3f3f3;
+        border-top-color: #8A5CFF;
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    #loader.hidden {
+        opacity: 0;
+        visibility: hidden;
+    }
     *{box-sizing:border-box}
     html, body { height: 100%; }
     body{
@@ -151,6 +176,11 @@
 </style>
 </head>
 <body>
+    <div id="loader">
+        <div class="spinner"></div>
+    </div>
+    <div id="page-content" style="visibility: hidden;">
+    <div aria-hidden="true" class="page-bg"></div>
 <div aria-hidden="true" class="page-bg"></div>
 
 <svg style="position:absolute;width:0;height:0" xmlns="http://www.w3.org/2000/svg">
@@ -427,6 +457,21 @@
       requestAnimationFrame(loop);
     })();
 </script>
+</div>
+<script>
+        // --- Loader ---
+    window.onload = function() {
+    const loader = document.getElementById('loader');
+    const content = document.getElementById('page-content');
 
+    // Hide loader and show content
+    loader.classList.add('hidden');
+    content.style.visibility = 'visible';
+
+    // Initialize all your page functions now that everything is loaded
+    initPageFunctions();
+    initIconAnimation();
+};
+</script>
 </body>
 </html>
