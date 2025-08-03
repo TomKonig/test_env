@@ -225,6 +225,7 @@
 </div>
 
 <script>
+    // Wrapper function for all page logic to be called after load
     function initPageFunctions() {
         // --- Standard Page Scripts ---
         document.getElementById('year').textContent = new Date().getFullYear();
@@ -302,15 +303,15 @@
         function caret(on){ if(on){ if(!qText.querySelector('.qz-caret')){ const c=document.createElement('span'); c.className='qz-caret'; qText.appendChild(c); } }else{ const c=qText.querySelector('.qz-caret'); c && c.remove(); } }
         function typeIn(text, speed){ return new Promise(resolve=>{ qText.textContent = ''; let i=0; (function step(){ if(i<text.length){ qText.textContent += text[i++]; setTimeout(step, speed); } else { caret(true); resolve(); } })(); }); }
         function backspaceAll(speed){ return new Promise(resolve=>{ caret(false); (function step(){ const t = qText.textContent; if(t.length){ qText.textContent = t.slice(0,-1); setTimeout(step, speed); } else { resolve(); } })(); }); }
-        function showAnswers(list){ qAns.classList.remove('qz-fade-out'); qAns.innerHTML=''; list.forEach((label, i)=>{ const b = document.createElement('button'); b.type='button'; b.className='qz-pill'; b.innerHTML = '<span>'+label+'</span>'; b.style.opacity='0'; b.style.transform='translateY(6px)'; b.addEventListener('click', ()=> onSelect(b)); qAns.appendChild(b); setTimeout(()=>{ b.style.transition='opacity .35s ease, transform .35s ease'; b.style.opacity='1'; b.style.transform='translateY(0)'; }, 100*i + 120); }); }
+        function showAnswers(list){ qAns.classList.remove('qz-fade-out'); qAns.innerHTML=''; list.forEach((label, i)=>{ const b = document.createElement('button'); b.type='button'; b.className='qz-pill'; b.innerHTML = '<span>'+label+'</span>'; b.style.opacity='0'; b.style.transform='translateY(6px)'; b.addEventListener('click', function() { onSelect(b); }); qAns.appendChild(b); setTimeout(function() { b.style.transition='opacity .35s ease, transform .35s ease'; b.style.opacity='1'; b.style.transform='translateY(0)'; }, 100*i + 120); }); }
         async function onSelect(btn){ Array.from(qAns.children).forEach(b => b.classList.toggle('qz-selected', b===btn)); qAns.classList.add('qz-fade-out'); await backspaceAll(22); next(); }
         let index = 0;
         async function next(){ if(index >= QUESTIONS.length){ caret(false); qText.textContent = 'Tak! Vi finder gaver til dig …'; qAns.innerHTML=''; return; } const {q, a} = QUESTIONS[index++]; setEyebrow(index-1); await typeIn(q, 48); showAnswers(a); }
-        btn.addEventListener('click', ()=>{ cta.classList.add('qz-active'); qWrap.style.display='block'; index = 0; next(); }, {once:true});
+        btn.addEventListener('click', function() { cta.classList.add('qz-active'); qWrap.style.display='block'; index = 0; next(); }, {once:true});
     }
 
+    // Wrapper function for the icon animation to be called after load
     function initIconAnimation(){
-        // --- COMBINED & CORRECTED ICON ANIMATION SCRIPT ---
         const ICONS = Array.from({ length: 19 }, (_, i) => i + 1);
         const COLORS = ["#FFD86B","#FF5DB1","#8A5CFF","#5BE2FF"];
         const layer = document.getElementById('icon-layer');
@@ -338,6 +339,11 @@
 
               const parser = new DOMParser();
               const doc = parser.parseFromString(svgText, "image/svg+xml");
+              // Check if the parser returns a valid SVG document
+              if (doc.documentElement.nodeName === "parsererror" || !doc.documentElement) {
+                console.error("Failed to parse SVG for icon: " + name);
+                return;
+              }
               const fetchedSvg = doc.documentElement;
               const viewBox = fetchedSvg.getAttribute('viewBox');
 
@@ -346,7 +352,7 @@
 
               while(fetchedSvg.firstChild) {
                 const child = fetchedSvg.firstChild;
-                if (child.nodeType === 1) {
+                if (child.nodeType === 1) { // Ensure it's an element node
                   child.querySelectorAll('[fill]').forEach(f => f.removeAttribute('fill'));
                   child.querySelectorAll('[stroke]').forEach(s => s.removeAttribute('stroke'));
                   child.removeAttribute('fill');
@@ -381,21 +387,24 @@
               el.style.opacity = '0';
               el.style.transform = `translate(${x}px, ${y}px)`;
               layer.appendChild(el);
-              requestAnimationFrame(() => el.style.opacity = String(getComputedStyle(document.documentElement).getPropertyValue('--icon-opacity') || .62));
+              requestAnimationFrame(function() { 
+                  el.style.opacity = String(getComputedStyle(document.documentElement).getPropertyValue('--icon-opacity') || .62) 
+              });
 
               const icon = { el, x, y, r, size, theta: thetaBase, omega: rand(-CFG.turnMax * 0.2, CFG.turnMax * 0.2), targetOmega: 0 };
               icons.push(icon);
 
             } catch (e) {
-              // Gracefully handle cases where an SVG might be empty or fail to load
               console.error(`Could not spawn icon:`, e);
             }
         }
 
         function despawn(icon) {
             icon.el.style.opacity = '0';
-            setTimeout(() => {
-              icon.el?.parentNode?.removeChild(icon.el);
+            setTimeout(function() {
+              if (icon.el && icon.el.parentNode) {
+                icon.el.parentNode.removeChild(icon.el);
+              }
             }, CFG.fadeMs);
             const i = icons.indexOf(icon);
             if (i >= 0) icons.splice(i, 1);
@@ -453,6 +462,7 @@
     }
 
     // --- Main Initializer ---
+    // This is the trigger that waits for the entire page to load.
     window.onload = function() {
         const loader = document.getElementById('loader');
         const content = document.getElementById('page-content');
