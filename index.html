@@ -531,74 +531,99 @@
 })();
 </script>
 <script>
-    (function(){
-      const ICONS = Array.from({ length: 19 }, (_, i) => i + 1);
-      const COLORS = ["#FFD86B","#FF5DB1","#8A5CFF","#5BE2FF"];
-      const layer = document.getElementById('icon-layer');
-      const svgNS = "http://www.w3.org/2000/svg";
-      const CFG = { count: 7, minSize: 42, maxSize: 60, speed: 10, turnMax: 0.35, noise: 0.18, sepPad: 6, off: 80, fadeMs: 700 };
-      const icons = [];
-      let VW = innerWidth, VH = innerHeight;
-      function resize(){ VW = Math.max(1, innerWidth); VH = Math.max(1, innerHeight); layer.setAttribute('viewBox', `0 0 ${VW} ${VH}`); }
-      addEventListener('resize', resize); addEventListener('orientationchange', resize); resize();
-      const rand = (a,b)=> a + Math.random()*(b-a); const pick = a => a[Math.floor(Math.random()*a.length)];
-      
-  async function fromSymbol(name, color) {
-  const g = document.createElementNS(svgNS, 'g');
-  try {
-    const res = await fetch(`icons/${name}.svg`);
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-    
-    const svgText = await res.text();
-    
-    // Use the browser's parser, which is more robust
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(svgText, "image/svg+xml");
-    const fetchedSvg = doc.documentElement;
+(function(){
+  const ICONS = Array.from({ length: 19 }, (_, i) => i + 1);
+  const COLORS = ["#FFD86B","#FF5DB1","#8A5CFF","#5BE2FF"];
+  const layer = document.getElementById('icon-layer');
+  const svgNS = "http://www.w3.org/2000/svg";
+  const CFG = { count: 7, minSize: 42, maxSize: 60, speed: 10, turnMax: 0.35, noise: 0.18, sepPad: 6, off: 80, fadeMs: 700 };
+  let VW = innerWidth, VH = innerHeight;
 
-    // --- The Critical Fix ---
-    // Get the viewBox from the file and apply it to the new SVG container
-    if (fetchedSvg.getAttribute('viewBox')) {
-      const svgContainer = g.closest('svg'); // Find the parent <svg>
-      if(svgContainer) {
-         svgContainer.setAttribute('viewBox', fetchedSvg.getAttribute('viewBox'));
+  function resize(){ VW = Math.max(1, innerWidth); VH = Math.max(1, innerHeight); layer.setAttribute('viewBox', `0 0 ${VW} ${VH}`); }
+  addEventListener('resize', resize);
+  addEventListener('orientationchange', resize);
+  resize();
+
+  const rand = (a,b)=> a + Math.random()*(b-a);
+  const pick = a => a[Math.floor(Math.random()*a.length)];
+
+  /**
+   * Fetches an SVG file, extracts its content into a <g> element,
+   * and returns both the content and the original viewBox.
+   * @param {string} name - The icon number (e.g., '1').
+   * @param {string} color - The color to apply to the icon.
+   * @returns {Promise<{content: SVGGElement, viewBox: string|null}>}
+   */
+  async function createIconGroup(name, color) {
+    const g = document.createElementNS(svgNS, 'g');
+    let viewBox = null;
+    try {
+      const res = await fetch(`icons/${name}.svg`);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      
+      const svgText = await res.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(svgText, "image/svg+xml");
+      const fetchedSvg = doc.documentElement;
+
+      // Grab the viewBox from the original file
+      viewBox = fetchedSvg.getAttribute('viewBox');
+
+      // Transfer children from the fetched SVG to the new group
+      while(fetchedSvg.firstChild) {
+        const child = fetchedSvg.firstChild;
+        // Remove hardcoded fill/stroke to allow CSS colors to apply
+        if (child.nodeType === 1) { // Ensure it's an element
+            child.removeAttribute('fill');
+            child.removeAttribute('stroke');
+            child.querySelectorAll('[fill]').forEach(el => el.removeAttribute('fill'));
+            child.querySelectorAll('[stroke]').forEach(el => el.removeAttribute('stroke'));
+        }
+        g.appendChild(child);
       }
-    }
-
-    // Now, copy the contents and apply the color
-    for (const child of fetchedSvg.children) {
-      const clone = child.cloneNode(true);
       
-      // Remove hardcoded fills to allow your color to apply
-      clone.querySelectorAll('[fill]').forEach(el => el.removeAttribute('fill'));
+      // Apply the desired color to the group
+      g.setAttribute('fill', color);
+      g.setAttribute('stroke', color);
 
-      clone.setAttribute('stroke', color);
-      clone.setAttribute('fill', color);
-      g.appendChild(clone);
+    } catch (e) {
+      console.error("Failed to load or process /icons/" + name + ".svg", e);
     }
-  } catch (e) {
-    console.error("Failed to load or process /icons/" + name + ".svg", e);
+    return { content: g, viewBox: viewBox };
   }
-  return g;
-}
 
+  /**
+   * Creates and places icons on the page.
+   */
   async function spawnIcons() {
     for (let i = 0; i < CFG.count; i++) {
       const name = pick(ICONS);
       const color = pick(COLORS);
-      const g = await fromSymbol(name, color);
+      
+      // 1. Create the <svg> container element FIRST.
       const svg = document.createElementNS(svgNS, 'svg');
       const size = rand(CFG.minSize, CFG.maxSize);
       svg.setAttribute('width', size);
       svg.setAttribute('height', size);
-      svg.appendChild(g);
+      
+      // 2. Add it to the DOM.
       layer.appendChild(svg);
-      icons.push(svg);
+
+      // 3. Fetch the icon data (content and viewBox).
+      const iconData = await createIconGroup(name, color);
+
+      // 4. NOW apply the viewBox and append the content.
+      if (iconData.viewBox) {
+        svg.setAttribute('viewBox', iconData.viewBox);
+      }
+      if (iconData.content) {
+        svg.appendChild(iconData.content);
+      }
     }
   }
+
   spawnIcons();
-  
-})();                  <!-- close the IIFE -->
+})();
 </script>
 </body>
 </html>
