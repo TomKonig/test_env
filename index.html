@@ -544,26 +544,43 @@
       const rand = (a,b)=> a + Math.random()*(b-a); const pick = a => a[Math.floor(Math.random()*a.length)];
       
   async function fromSymbol(name, color) {
-    const g = document.createElementNS(svgNS, 'g');
-    try {
-      const res = await fetch(`icons/${name}.svg`);
-      const svgText = await res.text();
-      const temp = document.createElement('div');
-      temp.innerHTML = svgText;
-      const fetchedSvg = temp.querySelector('svg');
-      if (fetchedSvg) {
-        for (const child of fetchedSvg.children) {
-          const clone = child.cloneNode(true);
-          clone.setAttribute('stroke', color);
-          clone.setAttribute('fill', color);
-          g.appendChild(clone);
-        }
+  const g = document.createElementNS(svgNS, 'g');
+  try {
+    const res = await fetch(`icons/${name}.svg`);
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    
+    const svgText = await res.text();
+    
+    // Use the browser's parser, which is more robust
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(svgText, "image/svg+xml");
+    const fetchedSvg = doc.documentElement;
+
+    // --- The Critical Fix ---
+    // Get the viewBox from the file and apply it to the new SVG container
+    if (fetchedSvg.getAttribute('viewBox')) {
+      const svgContainer = g.closest('svg'); // Find the parent <svg>
+      if(svgContainer) {
+         svgContainer.setAttribute('viewBox', fetchedSvg.getAttribute('viewBox'));
       }
-    } catch (e) {
-      console.error("Failed to load /icons/" + name + ".svg", e);
     }
-    return g;
+
+    // Now, copy the contents and apply the color
+    for (const child of fetchedSvg.children) {
+      const clone = child.cloneNode(true);
+      
+      // Remove hardcoded fills to allow your color to apply
+      clone.querySelectorAll('[fill]').forEach(el => el.removeAttribute('fill'));
+
+      clone.setAttribute('stroke', color);
+      clone.setAttribute('fill', color);
+      g.appendChild(clone);
+    }
+  } catch (e) {
+    console.error("Failed to load or process /icons/" + name + ".svg", e);
   }
+  return g;
+}
 
   async function spawnIcons() {
     for (let i = 0; i < CFG.count; i++) {
