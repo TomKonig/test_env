@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-
 <html lang="da">
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
-<title>Den Rette Gave – Unified Gradient (Fix v6a)</title>
+<title>Den Rette Gave – Animation & Icon Fix</title>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
@@ -38,7 +37,10 @@
       background-size: 28px 28px;
       mask-image: radial-gradient(60% 60% at 50% 40%, rgba(0,0,0,.8), transparent 70%);
     }
+    /* CRITICAL FIX: The #icon-layer is now a div, its CSS is perfect for this. */
     #icon-layer{ position: fixed; inset: 0; width:100vw; height:100vh; pointer-events:none; z-index:0; }
+    /* Animated icons will be absolutely positioned inside the layer */
+    #icon-layer > svg { position: absolute; transition: opacity .7s ease; }
 
     .container{ width: min(1120px, 92vw); margin: 0 auto; }
     .nav{ position:relative; z-index:3; padding: 10px 0; }
@@ -88,16 +90,12 @@
     .em-altid .arc path{ fill:none; stroke-linecap:round; stroke-linejoin:round; opacity:.9; transition: stroke-dashoffset .6s ease-out, opacity .25s ease; }
     .em-altid:hover .arc path{ stroke-dashoffset: 0 !important; opacity:1; }
 
-    /* Gradient for landing H1 */
     .grad-text {
-  background: var(--brand-grad-css);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-  position: relative;
-  line-height:1.35em;
-}
+      background: var(--brand-grad-css);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+      position: relative; line-height:1.35em;
+    }
 
     .lead{ font-size: clamp(15px, 2.2vw, 20px); color:#5a6472; max-width:60ch; margin:0 auto; }
     .actions{ display:flex; align-items:center; justify-content:center; gap:14px; margin-top:26px; flex-wrap:wrap; }
@@ -132,169 +130,42 @@
     body { overflow: hidden; }
     .hero-wrap{ min-height: var(--hero-avail, 72svh); }
   
-/* ===== Quiz mode additions (scoped to #cta) ===== */
-#cta .qz-area{display:none}
-#cta.qz-active > .eyebrow{display:inline-flex}
-#cta.qz-active > h1,
-#cta.qz-active > .lead,
-#cta.qz-active > .actions{display:none}
-#cta.qz-active .qz-area{display:block}
-
-#cta .qz-heading{
-  color:#8A5CFF;
-  font-weight:800;
-  letter-spacing:-.01em;
-  line-height:1.2;
-  margin:14px 0 8px;
-  min-height:2.8em; /* reserves space to avoid reflow between questions */
-}
-
-#cta .qz-answers{
-  margin-top: clamp(1em, 3vw, 2em);
-  display:grid;
-  grid-template-columns:1fr;
-  gap:14px;
-  min-height:160px; /* reserve space for animations */
-}
-@media(min-width:680px){
-  #cta .qz-answers{ grid-template-columns:1fr 1fr; min-height:128px; }
-}
-
-
-/* Fade out answers before backspacing */
-#cta .qz-answers.qz-fade-out .qz-pill{
-  opacity:0; transform:translateY(8px); pointer-events:none;
-  transition:opacity .35s ease, transform .35s ease;
-}
-
-/* Caret for typewriter */
-.qz-caret{
-  display:inline-block;
-  width:.07em; height:.9em;
-  background:currentColor;
-  vertical-align:-.06em; margin-left:.06em;
-  animation:qz-blink 1s steps(1, end) infinite;
-}
-@keyframes qz-blink{
-  0%,49%{opacity:1}
-  50%,100%{opacity:0}
-}
-
-#cta .qz-pill{
-  color:#8A5CFF; /* default text color */
-  --ring: 2px;
-  position:relative; display:flex; align-items:center; justify-content:center;
-  padding: clamp(0.8em, 1.2vw, 1.1em) clamp(1.2em, 2vw, 2.2em); border-radius:999px; font-weight:800; cursor:pointer;
-  border: var(--ring) solid transparent;
-  background:
-    linear-gradient(rgba(255,255,255,.62), rgba(255,255,255,.62)) padding-box,
-    var(--brand-grad-css) border-box;
-  -webkit-backdrop-filter: blur(10px) saturate(150%);
-          backdrop-filter: blur(10px) saturate(150%);
-  transition: transform .16s ease, box-shadow .2s ease, color .2s ease, opacity .25s ease;
-  overflow:hidden;
-}
-
-#cta .qz-pill > span{ 
-  position:relative; 
-  z-index:1; 
-  font-size:1.4em; 
-  line-height:1.6em; 
-  color:inherit;
-  text-align:center;
-  text-decoration:none;
-  transition: color .2s ease;}
-
-#cta .qz-pill:hover{
-  background:
-    var(--brand-grad-css) padding-box,
-    var(--brand-grad-css) border-box;
-    transition: color .2s ease;
-}
-
-/* Frost band for better label contrast over gradient fills */
-#cta .qz-pill::before{
-  content:"";
-  position:absolute;
-  inset: calc(var(--ring) + 2px);
-  border-radius: inherit;
-  pointer-events:none;
-  z-index:0;
-  background:
-    radial-gradient(120% 180% at 50% 55%,
-      rgba(255,255,255,.78) 0%,
-      rgba(255,255,255,.46) 36%,
-      rgba(255,255,255,.12) 65%,
-      rgba(255,255,255,0) 76%);
-  backdrop-filter: blur(2px) saturate(130%);
-  -webkit-backdrop-filter: blur(2px) saturate(130%);
-}
-
-/* Remove frosting on selected pill */
-#cta .qz-pill.qz-selected::before{ display:none; }
-
-/* Selected -> full gradient fill */
-#cta .qz-pill.qz-selected,
-#cta .qz-pill.qz-selected:hover{
-  color:#fff;
-  border-color: transparent;
-  background:
-    var(--brand-grad-css) padding-box,
-    var(--brand-grad-css) border-box;
-}
-
-#arc-path {
-  stroke: url(#arcStroke);
-  stroke-width: 3;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-dasharray: 16 12;
-  stroke-dashoffset: 0;
-  opacity: 0.9;
-  animation: swipe-stroke 1s linear infinite;
-}
-
-
-@keyframes swipe-stroke {
-  0%   { stroke-dashoffset: 0; }
-  100% { stroke-dashoffset: -28; }
-}
-</style></head>
+    #cta .qz-area{display:none}
+    #cta.qz-active > .eyebrow{display:inline-flex}
+    #cta.qz-active > h1, #cta.qz-active > .lead, #cta.qz-active > .actions{display:none}
+    #cta.qz-active .qz-area{display:block}
+    #cta .qz-heading{ color:#8A5CFF; font-weight:800; letter-spacing:-.01em; line-height:1.2; margin:14px 0 8px; min-height:2.8em; }
+    #cta .qz-answers{ margin-top: clamp(1em, 3vw, 2em); display:grid; grid-template-columns:1fr; gap:14px; min-height:160px; }
+    @media(min-width:680px){ #cta .qz-answers{ grid-template-columns:1fr 1fr; min-height:128px; } }
+    #cta .qz-answers.qz-fade-out .qz-pill{ opacity:0; transform:translateY(8px); pointer-events:none; transition:opacity .35s ease, transform .35s ease; }
+    .qz-caret{ display:inline-block; width:.07em; height:.9em; background:currentColor; vertical-align:-.06em; margin-left:.06em; animation:qz-blink 1s steps(1, end) infinite; }
+    @keyframes qz-blink{ 0%,49%{opacity:1} 50%,100%{opacity:0} }
+    #cta .qz-pill{ color:#8A5CFF; --ring: 2px; position:relative; display:flex; align-items:center; justify-content:center; padding: clamp(0.8em, 1.2vw, 1.1em) clamp(1.2em, 2vw, 2.2em); border-radius:999px; font-weight:800; cursor:pointer; border: var(--ring) solid transparent; background: linear-gradient(rgba(255,255,255,.62), rgba(255,255,255,.62)) padding-box, var(--brand-grad-css) border-box; -webkit-backdrop-filter: blur(10px) saturate(150%); backdrop-filter: blur(10px) saturate(150%); transition: transform .16s ease, box-shadow .2s ease, color .2s ease, opacity .25s ease; overflow:hidden; }
+    #cta .qz-pill > span{ position:relative; z-index:1; font-size:1.4em; line-height:1.6em; color:inherit; text-align:center; text-decoration:none; transition: color .2s ease;}
+    #cta .qz-pill:hover{ background: var(--brand-grad-css) padding-box, var(--brand-grad-css) border-box; transition: color .2s ease; }
+    #cta .qz-pill::before{ content:""; position:absolute; inset: calc(var(--ring) + 2px); border-radius: inherit; pointer-events:none; z-index:0; background: radial-gradient(120% 180% at 50% 55%, rgba(255,255,255,.78) 0%, rgba(255,255,255,.46) 36%, rgba(255,255,255,.12) 65%, rgba(255,255,255,0) 76%); backdrop-filter: blur(2px) saturate(130%); -webkit-backdrop-filter: blur(2px) saturate(130%); }
+    #cta .qz-pill.qz-selected::before{ display:none; }
+    #cta .qz-pill.qz-selected, #cta .qz-pill.qz-selected:hover{ color:#fff; border-color: transparent; background: var(--brand-grad-css) padding-box, var(--brand-grad-css) border-box; }
+    #arc-path { stroke: url(#arcStroke); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 16 12; stroke-dashoffset: 0; opacity: 0.9; animation: swipe-stroke 1s linear infinite; }
+    @keyframes swipe-stroke { 0% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -28; } }
+</style>
+</head>
 <body>
 <div aria-hidden="true" class="page-bg"></div>
-<svg id="defs" style="position:absolute;width:0;height:0" xmlns="http://www.w3.org/2000/svg">
+
+<svg style="position:absolute;width:0;height:0" xmlns="http://www.w3.org/2000/svg">
 <defs>
-<lineargradient color-interpolation="sRGB" gradienttransform="rotate(45 134 183.5)" gradientunits="userSpaceOnUse" id="brandGrad" x1="-30" x2="268" y1="183.5" y2="183.5">
+<linearGradient id="brandGrad" x1="-30" y1="183.5" x2="268" y2="183.5" gradientUnits="userSpaceOnUse" gradientTransform="rotate(45 134 183.5)" color-interpolation="sRGB">
 <stop offset="0%" stop-color="#FFD86B"></stop>
 <stop offset="25%" stop-color="#FF5DB1"></stop>
 <stop offset="50%" stop-color="#8A5CFF"></stop>
 <stop offset="100%" stop-color="#5BE2FF"></stop>
-</lineargradient>
+</linearGradient>
 </defs>
 </svg>
-<svg aria-hidden="true" id="icon-layer" preserveaspectratio="none" xmlns="http://www.w3.org/2000/svg">
-<defs>
-<symbol id="i-gift" viewbox="0 0 24 24">
-<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
-<rect height="13" rx="2" width="18" x="3" y="8"></rect>
-<path d="M12 8v13M3 12h18"></path>
-<path d="M7.5 6.5a2.5 2.5 0 1 1 5 0v1.5H10c-1.4 0-2.5-1.1-2.5-2.5Z"></path>
-<path d="M16.5 6.5a2.5 2.5 0 1 0-5 0v1.5H14c1.4 0 2.5-1.1 2.5-2.5Z"></path>
-</g>
-</symbol>
-<symbol id="i-sparkle" viewbox="0 0 24 24">
-<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8">
-<path d="M12 3l1.6 4.8L18 9.3l-4.4 1.6L12 16l-1.6-5.1L6 9.3l4.4-1.6L12 3Z"></path>
-</g>
-</symbol>
-<symbol id="i-heart" viewbox="0 0 24 24">
-<path d="M12 20s-7-4.7-7-9.2A4.8 4.8 0 0 1 9.7 6c1.1 0 2.2.5 3 1.3A4.3 4.3 0 0 1 15.7 6 4.8 4.8 0 0 1 19 10.8C19 15.3 12 20 12 20z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
-</symbol>
-<symbol id="i-star" viewbox="0 0 24 24">
-<path d="M12 3l2.4 5 5.6.6-4.2 3.9 1.2 5.5L12 15.8 6.9 18l1.2-5.5L3.9 8.6 9.6 8z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"></path>
-</symbol>
-</defs>
-</svg>
+
+<div aria-hidden="true" id="icon-layer"></div>
+
 <header aria-label="Top navigation" class="nav"><div class="container">
 <div class="nav-surface" style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px clamp(18px, 3vw, 28px);border-radius:16px;background:rgba(255,255,255,.34);-webkit-backdrop-filter:blur(14px) saturate(140%) contrast(1.0);backdrop-filter:blur(14px) saturate(140%) contrast(1.0);border:1px solid rgba(255,255,255,.6);outline:1px solid rgba(11,16,32,.06);outline-offset:-1px;box-shadow:0 6px 18px rgba(17,20,40,.08), inset 0 1px 0 rgba(255,255,255,.55)">
 <a aria-label="Til forsiden" class="brand" href="index.html">
@@ -324,7 +195,9 @@
 <div class="copy">© <span id="year"></span> Intelfy. Alle rettigheder forbeholdes.</div>
 </div>
 </footer>
+
 <script>
+    // --- Standard Page Scripts ---
     document.getElementById('year').textContent = new Date().getFullYear();
     (function(){
       const docEl = document.documentElement;
@@ -340,352 +213,220 @@
       addEventListener('DOMContentLoaded', setHeroHeight);
       setHeroHeight();
     })();
-  </script>
-<script>
-(function(){
-  function drawArcUnderWord(word, containerSelector) {
-    const container = document.querySelector(containerSelector);
-    if (!container) return;
 
-    const textNode = [...container.childNodes].find(n => n.nodeType === Node.TEXT_NODE && n.textContent.includes(word));
-    if (!textNode) return;
-
-    const range = document.createRange();
-    const start = textNode.textContent.indexOf(word);
-    range.setStart(textNode, start);
-    range.setEnd(textNode, start + word.length);
-
-    const rect = range.getBoundingClientRect();
-    const containerRect = container.getBoundingClientRect();
-    const relX = rect.left - containerRect.left;
-    const relY = rect.bottom - containerRect.top;
-
-    const width = rect.width;
-    const height = 12;
-
-    const fontSize = parseFloat(getComputedStyle(container).fontSize);
-
-    let svg = document.getElementById("arc-svg");
-    let path = document.getElementById("arc-path");
-
-    if (!svg) {
-      svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svg.id = "arc-svg";
-      svg.style.position = "absolute";
-      svg.style.pointerEvents = "none";
-      svg.style.zIndex = "1";
-      svg.style.overflow = "visible";
-
-      const defs = document.createElementNS(svg.namespaceURI, "defs");
-      const grad = document.createElementNS(svg.namespaceURI, "linearGradient");
-      grad.id = "arcStroke";
-      grad.setAttribute("gradientTransform", "rotate(45 .5 .5)");
-      const stops = [
-        ["0%", "#FFD86B"],
-        ["25%", "#FF5DB1"],
-        ["50%", "#8A5CFF"],
-        ["100%", "#5BE2FF"]
-      ];
-      for (const [offset, color] of stops) {
-        const stop = document.createElementNS(svg.namespaceURI, "stop");
-        stop.setAttribute("offset", offset);
-        stop.setAttribute("stop-color", color);
-        grad.appendChild(stop);
-      }
-      defs.appendChild(grad);
-      svg.appendChild(defs);
-
-      path = document.createElementNS(svg.namespaceURI, "path");
-      path.id = "arc-path";
-      path.setAttribute("stroke", "url(#arcStroke)");
-      path.setAttribute("fill", "none");
-      path.setAttribute("stroke-width", "3");
-      path.setAttribute("stroke-linecap", "round");
-      path.setAttribute("stroke-linejoin", "round");
-      path.setAttribute("stroke-dasharray", "6 10");
-      path.setAttribute("stroke-dashoffset", "16");
-      path.setAttribute("opacity", "0.9");
-
-      svg.appendChild(path);
-      container.appendChild(svg);
-    }
-
-    svg.setAttribute("width", width + 6);
-    svg.setAttribute("height", height);
-    svg.style.left = (relX - 3) + "px";
-    svg.style.top = (relY - 0.08 * fontSize) + "px";
-
-    const y = Math.round(height - 0.25 * fontSize);
-    const a = Math.max(5, width * 0.18);
-    const b = Math.max(5, width * 0.52);
-    path.setAttribute("d", `M 2 ${y} C ${a} ${y+4}, ${b} ${y-6}, ${width - 2} ${y}`);
-  }
-
-  window.addEventListener("DOMContentLoaded", () => {
-    drawArcUnderWord("altid", "#hero-title");
-  });
-  window.addEventListener("resize", () => {
-    drawArcUnderWord("altid", "#hero-title");
-  });
-})();
-
-(function(){
-  const cta = document.getElementById('cta');
-  const btn = cta.querySelector('.actions .btn, .actions button');
-  const eyebrow = cta.querySelector('.eyebrow');
-  const qWrap = cta.querySelector('.qz-area');
-  const qText = cta.querySelector('#qzText');
-  const qAns  = cta.querySelector('#qzAnswers');
-  if(!btn || !qWrap) return;
-
-  const QUESTIONS = [
-    { q: 'Hvem skal forkæles?', a: ['Min partner','En forælder','En søskende','En ven/kollega'] },
-    { q: 'Hvad er cirka budgettet?', a: ['Under 250 kr.','250–500 kr.','500–1.000 kr.','1.000+ kr.'] }
-  ];
-
-  function setEyebrow(i){
-    if(eyebrow){ eyebrow.textContent = 'Spørgsmål ' + (i+1); }
-  }
-  function caret(on){
-    if(on){
-      if(!qText.querySelector('.qz-caret')){
-        const c=document.createElement('span'); c.className='qz-caret'; qText.appendChild(c);
-      }
-    }else{
-      const c=qText.querySelector('.qz-caret'); c && c.remove();
-    }
-  }
-  function typeIn(text, speed){
-    return new Promise(resolve=>{
-      qText.textContent = '';
-      let i=0;
-      (function step(){
-        if(i<text.length){
-          qText.textContent += text[i++];
-          setTimeout(step, speed);
-        } else {
-          caret(true);
-          resolve();
+    (function(){
+      function drawArcUnderWord(word, containerSelector) {
+        const container = document.querySelector(containerSelector);
+        if (!container) return;
+        const textNode = [...container.childNodes].find(n => n.nodeType === Node.TEXT_NODE && n.textContent.includes(word));
+        if (!textNode) return;
+        const range = document.createRange();
+        const start = textNode.textContent.indexOf(word);
+        range.setStart(textNode, start);
+        range.setEnd(textNode, start + word.length);
+        const rect = range.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        const relX = rect.left - containerRect.left;
+        const relY = rect.bottom - containerRect.top;
+        const width = rect.width;
+        const height = 12;
+        const fontSize = parseFloat(getComputedStyle(container).fontSize);
+        let svg = document.getElementById("arc-svg");
+        let path = document.getElementById("arc-path");
+        if (!svg) {
+          svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+          svg.id = "arc-svg";
+          svg.style.position = "absolute"; svg.style.pointerEvents = "none"; svg.style.zIndex = "1"; svg.style.overflow = "visible";
+          const defs = document.createElementNS(svg.namespaceURI, "defs");
+          const grad = document.createElementNS(svg.namespaceURI, "linearGradient");
+          grad.id = "arcStroke";
+          grad.setAttribute("gradientTransform", "rotate(45 .5 .5)");
+          const stops = [ ["0%", "#FFD86B"], ["25%", "#FF5DB1"], ["50%", "#8A5CFF"], ["100%", "#5BE2FF"] ];
+          for (const [offset, color] of stops) {
+            const stop = document.createElementNS(svg.namespaceURI, "stop");
+            stop.setAttribute("offset", offset); stop.setAttribute("stop-color", color);
+            grad.appendChild(stop);
+          }
+          defs.appendChild(grad); svg.appendChild(defs);
+          path = document.createElementNS(svg.namespaceURI, "path");
+          path.id = "arc-path";
+          path.setAttribute("stroke", "url(#arcStroke)"); path.setAttribute("fill", "none"); path.setAttribute("stroke-width", "3"); path.setAttribute("stroke-linecap", "round"); path.setAttribute("stroke-linejoin", "round"); path.setAttribute("stroke-dasharray", "6 10"); path.setAttribute("stroke-dashoffset", "16"); path.setAttribute("opacity", "0.9");
+          svg.appendChild(path); container.appendChild(svg);
         }
-      })();
-    });
-  }
-  function backspaceAll(speed){
-    return new Promise(resolve=>{
-      caret(false);
-      (function step(){
-        const t = qText.textContent;
-        if(t.length){
-          qText.textContent = t.slice(0,-1);
-          setTimeout(step, speed);
-        } else {
-          resolve();
-        }
-      })();
-    });
-  }
+        svg.setAttribute("width", width + 6); svg.setAttribute("height", height);
+        svg.style.left = (relX - 3) + "px"; svg.style.top = (relY - 0.08 * fontSize) + "px";
+        const y = Math.round(height - 0.25 * fontSize);
+        const a = Math.max(5, width * 0.18); const b = Math.max(5, width * 0.52);
+        path.setAttribute("d", `M 2 ${y} C ${a} ${y+4}, ${b} ${y-6}, ${width - 2} ${y}`);
+      }
+      window.addEventListener("DOMContentLoaded", () => drawArcUnderWord("altid", "#hero-title"));
+      window.addEventListener("resize", () => drawArcUnderWord("altid", "#hero-title"));
+    })();
 
-  function showAnswers(list){
-    qAns.classList.remove('qz-fade-out');
-    qAns.innerHTML='';
-    list.forEach((label, i)=>{
-      const b = document.createElement('button');
-      b.type='button'; b.className='qz-pill'; b.innerHTML = '<span>'+label+'</span>';
-      b.style.opacity='0'; b.style.transform='translateY(6px)';
-      b.addEventListener('click', ()=> onSelect(b));
-      qAns.appendChild(b);
-      setTimeout(()=>{
-        b.style.transition='opacity .35s ease, transform .35s ease';
-        b.style.opacity='1'; b.style.transform='translateY(0)';
-      }, 100*i + 120);
-    });
-  }
-
-  async function onSelect(btn){
-    Array.from(qAns.children).forEach(b => b.classList.toggle('qz-selected', b===btn));
-    qAns.classList.add('qz-fade-out');
-    await backspaceAll(22);
-    next();
-  }
-
-  let index = 0;
-  async function next(){
-    if(index >= QUESTIONS.length){
-      caret(false);
-      qText.textContent = 'Tak! Vi finder gaver til dig …';
-      qAns.innerHTML='';
-      return;
-    }
-    const {q, a} = QUESTIONS[index++];
-    setEyebrow(index-1);
-    await typeIn(q, 48);    // slightly slower typing
-    showAnswers(a);
-  }
-
-  btn.addEventListener('click', ()=>{
-    cta.classList.add('qz-active');
-    qWrap.style.display='block';
-    index = 0;
-    next();
-  }, {once:true});
-})();
+    (function(){
+      const cta = document.getElementById('cta');
+      const btn = cta.querySelector('.actions .btn, .actions button');
+      const eyebrow = cta.querySelector('.eyebrow');
+      const qWrap = cta.querySelector('.qz-area');
+      const qText = cta.querySelector('#qzText');
+      const qAns  = cta.querySelector('#qzAnswers');
+      if(!btn || !qWrap) return;
+      const QUESTIONS = [ { q: 'Hvem skal forkæles?', a: ['Min partner','En forælder','En søskende','En ven/kollega'] }, { q: 'Hvad er cirka budgettet?', a: ['Under 250 kr.','250–500 kr.','500–1.000 kr.','1.000+ kr.'] } ];
+      function setEyebrow(i){ if(eyebrow){ eyebrow.textContent = 'Spørgsmål ' + (i+1); } }
+      function caret(on){ if(on){ if(!qText.querySelector('.qz-caret')){ const c=document.createElement('span'); c.className='qz-caret'; qText.appendChild(c); } }else{ const c=qText.querySelector('.qz-caret'); c && c.remove(); } }
+      function typeIn(text, speed){ return new Promise(resolve=>{ qText.textContent = ''; let i=0; (function step(){ if(i<text.length){ qText.textContent += text[i++]; setTimeout(step, speed); } else { caret(true); resolve(); } })(); }); }
+      function backspaceAll(speed){ return new Promise(resolve=>{ caret(false); (function step(){ const t = qText.textContent; if(t.length){ qText.textContent = t.slice(0,-1); setTimeout(step, speed); } else { resolve(); } })(); }); }
+      function showAnswers(list){ qAns.classList.remove('qz-fade-out'); qAns.innerHTML=''; list.forEach((label, i)=>{ const b = document.createElement('button'); b.type='button'; b.className='qz-pill'; b.innerHTML = '<span>'+label+'</span>'; b.style.opacity='0'; b.style.transform='translateY(6px)'; b.addEventListener('click', ()=> onSelect(b)); qAns.appendChild(b); setTimeout(()=>{ b.style.transition='opacity .35s ease, transform .35s ease'; b.style.opacity='1'; b.style.transform='translateY(0)'; }, 100*i + 120); }); }
+      async function onSelect(btn){ Array.from(qAns.children).forEach(b => b.classList.toggle('qz-selected', b===btn)); qAns.classList.add('qz-fade-out'); await backspaceAll(22); next(); }
+      let index = 0;
+      async function next(){ if(index >= QUESTIONS.length){ caret(false); qText.textContent = 'Tak! Vi finder gaver til dig …'; qAns.innerHTML=''; return; } const {q, a} = QUESTIONS[index++]; setEyebrow(index-1); await typeIn(q, 48); showAnswers(a); }
+      btn.addEventListener('click', ()=>{ cta.classList.add('qz-active'); qWrap.style.display='block'; index = 0; next(); }, {once:true});
+    })();
 </script>
+
 <script>
-(function(){
-  // Using the 19 new icons, not the 4 old symbols
-  const ICONS = Array.from({ length: 19 }, (_, i) => i + 1);
-  const COLORS = ["#FFD86B","#FF5DB1","#8A5CFF","#5BE2FF"];
-  const layer = document.getElementById('icon-layer');
-  const svgNS = "http://www.w3.org/2000/svg";
-  const CFG = { count: 7, minSize: 42, maxSize: 60, speed: 10, turnMax: 0.35, noise: 0.18, sepPad: 6, off: 80, fadeMs: 700 };
-  const icons = [];
-  let VW = innerWidth, VH = innerHeight;
-  
-  function resize(){ VW = Math.max(1, innerWidth); VH = Math.max(1, innerHeight); /* No viewBox on layer */ }
-  addEventListener('resize', resize); addEventListener('orientationchange', resize); resize();
-  
-  const rand = (a,b)=> a + Math.random()*(b-a);
-  const pick = a => a[Math.floor(Math.random()*a.length)];
-
-  /**
-   * Fetches, creates, and spawns a single animated icon using external SVG files.
-   * This combines the logic from both of your previous scripts.
-   */
-  async function spawn(mode="edge") {
-    try {
-      const name = pick(ICONS);
-      const color = pick(COLORS);
-      
-      // Fetch the SVG data
-      const res = await fetch(`icons/${name}.svg`);
-      if (!res.ok) throw new Error(`SVG fetch failed: ${res.status}`);
-      const svgText = await res.text();
-      
-      // Parse the fetched SVG
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(svgText, "image/svg+xml");
-      const fetchedSvg = doc.documentElement;
-      const viewBox = fetchedSvg.getAttribute('viewBox');
-
-      // Create the new <svg> element that will be animated
-      const el = document.createElementNS(svgNS, 'svg');
-      el.setAttribute('viewBox', viewBox);
-      el.style.position = 'absolute'; // Position for animation
-
-      // Transfer content, removing hardcoded colors
-      while(fetchedSvg.firstChild) {
-          const child = fetchedSvg.firstChild;
-          if (child.nodeType === 1) { // Is an element
+    // --- COMBINED & CORRECTED ICON ANIMATION SCRIPT ---
+    (function(){
+      const ICONS = Array.from({ length: 19 }, (_, i) => i + 1);
+      const COLORS = ["#FFD86B","#FF5DB1","#8A5CFF","#5BE2FF"];
+      const layer = document.getElementById('icon-layer');
+      const svgNS = "http://www.w3.org/2000/svg";
+      const CFG = { count: 7, minSize: 42, maxSize: 60, speed: 10, turnMax: 0.35, noise: 0.18, sepPad: 6, off: 80, fadeMs: 700 };
+      const icons = [];
+      let VW = innerWidth, VH = innerHeight;
+    
+      function resize(){ VW = Math.max(1, innerWidth); VH = Math.max(1, innerHeight); }
+      addEventListener('resize', resize);
+      addEventListener('orientationchange', resize);
+      resize();
+    
+      const rand = (a,b)=> a + Math.random()*(b-a);
+      const pick = a => a[Math.floor(Math.random()*a.length)];
+    
+      async function spawn(mode="edge") {
+        try {
+          const name = pick(ICONS);
+          const color = pick(COLORS);
+          
+          const res = await fetch(`icons/${name}.svg`);
+          if (!res.ok) throw new Error(`SVG fetch failed: ${res.status}`);
+          const svgText = await res.text();
+          
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(svgText, "image/svg+xml");
+          const fetchedSvg = doc.documentElement;
+          const viewBox = fetchedSvg.getAttribute('viewBox');
+    
+          const el = document.createElementNS(svgNS, 'svg');
+          if (viewBox) el.setAttribute('viewBox', viewBox);
+          
+          while(fetchedSvg.firstChild) {
+            const child = fetchedSvg.firstChild;
+            if (child.nodeType === 1) {
               child.querySelectorAll('[fill]').forEach(f => f.removeAttribute('fill'));
               child.querySelectorAll('[stroke]').forEach(s => s.removeAttribute('stroke'));
+              child.removeAttribute('fill');
+              child.removeAttribute('stroke');
+            }
+            el.appendChild(child);
           }
-          el.appendChild(child);
-      }
-      el.setAttribute('fill', color);
-      
-      // Use the physics logic from the old animation script
-      const size = Math.round(rand(CFG.minSize, CFG.maxSize));
-      el.style.width = size + 'px';
-      el.style.height = size + 'px';
-
-      const r = size / 2;
-      let x, y, thetaBase;
-
-      if (mode === "initial") {
-        x = rand(20, VW - 20 - size);
-        y = rand(20, VH - 20 - size);
-        thetaBase = rand(-Math.PI, Math.PI);
-      } else { // "edge"
-        const side = pick(["left", "right", "top", "bottom"]);
-        const off = CFG.off;
-        if (side === "left") { x = -size - off; y = rand(20, VH - 20); }
-        else if (side === "right") { x = VW + off; y = rand(20, VH - 20); }
-        else if (side === "top") { y = -size - off; x = rand(20, VW - 20); }
-        else { y = VH + off; x = rand(20, VW - 20); }
-        const aimX = rand(VW * 0.2, VW * 0.8), aimY = rand(VH * 0.2, VH * 0.8);
-        thetaBase = Math.atan2(aimY - y, aimX - x);
-      }
-
-      el.style.opacity = '0';
-      el.style.transform = `translate(${x}px, ${y}px)`;
-      layer.appendChild(el);
-      requestAnimationFrame(() => el.style.opacity = String(getComputedStyle(document.documentElement).getPropertyValue('--icon-opacity') || .62));
-
-      // Create the icon object for the animation loop
-      const icon = { el, name, color, x, y, r, size, theta: thetaBase, omega: rand(-CFG.turnMax * 0.2, CFG.turnMax * 0.2), targetOmega: 0 };
-      icons.push(icon);
-
-    } catch (e) {
-      console.error("Failed to spawn icon:", e);
-    }
-  }
-
-  function despawn(icon) {
-    icon.el.style.opacity = '0';
-    setTimeout(() => {
-      if (icon.el && icon.el.parentNode) {
-        icon.el.parentNode.removeChild(icon.el);
-      }
-    }, CFG.fadeMs);
-    const i = icons.indexOf(icon);
-    if (i >= 0) icons.splice(i, 1);
-    spawn("edge"); // Respawn a new one
-  }
-
-  function separate() {
-    for (let i = 0; i < icons.length; i++) {
-      for (let j = i + 1; j < icons.length; j++) {
-        const a = icons[i], b = icons[j];
-        const dx = (b.x + b.r) - (a.x + a.r);
-        const dy = (b.y + b.r) - (a.y + a.r);
-        const d = Math.hypot(dx, dy) || 0.0001;
-        const minD = (a.r + b.r) + CFG.sepPad;
-        if (d < minD) {
-          const nx = dx / d, ny = dy / d;
-          const push = (minD - d) * 0.5;
-          a.x -= nx * push; a.y -= ny * push;
-          b.x += nx * push; b.y += ny * push;
+          el.setAttribute('fill', color);
+          
+          const size = Math.round(rand(CFG.minSize, CFG.maxSize));
+          el.style.width = size + 'px';
+          el.style.height = size + 'px';
+    
+          const r = size / 2;
+          let x, y, thetaBase;
+    
+          if (mode === "initial") {
+            x = rand(20, VW - 20 - size);
+            y = rand(20, VH - 20 - size);
+            thetaBase = rand(-Math.PI, Math.PI);
+          } else {
+            const side = pick(["left", "right", "top", "bottom"]);
+            const off = CFG.off;
+            if (side === "left") { x = -size - off; y = rand(20, VH - 20); }
+            else if (side === "right") { x = VW + off; y = rand(20, VH - 20); }
+            else if (side === "top") { y = -size - off; x = rand(20, VW - 20); }
+            else { y = VH + off; x = rand(20, VW - 20); }
+            const aimX = rand(VW * 0.2, VW * 0.8), aimY = rand(VH * 0.2, VH * 0.8);
+            thetaBase = Math.atan2(aimY - y, aimX - x);
+          }
+    
+          el.style.opacity = '0';
+          el.style.transform = `translate(${x}px, ${y}px)`;
+          layer.appendChild(el);
+          requestAnimationFrame(() => el.style.opacity = String(getComputedStyle(document.documentElement).getPropertyValue('--icon-opacity') || .62));
+    
+          const icon = { el, x, y, r, size, theta: thetaBase, omega: rand(-CFG.turnMax * 0.2, CFG.turnMax * 0.2), targetOmega: 0 };
+          icons.push(icon);
+    
+        } catch (e) {
+          console.error(`Failed to spawn icon "${name}.svg":`, e);
         }
       }
-    }
-  }
-
-  function step(dt) {
-    separate();
-    const off = CFG.off;
-    for (const a of icons) {
-      a.targetOmega += (Math.random() - 0.5) * CFG.noise * dt;
-      a.targetOmega = Math.max(-CFG.turnMax, Math.min(CFG.turnMax, a.targetOmega));
-      a.omega += (a.targetOmega - a.omega) * 0.08;
-      a.theta += a.omega * dt;
-      const vx = Math.cos(a.theta) * CFG.speed;
-      const vy = Math.sin(a.theta) * CFG.speed;
-      a.x += vx * dt;
-      a.y += vy * dt;
-      
-      // Animate using CSS transform for better performance
-      a.el.style.transform = `translate(${a.x}px, ${a.y}px)`;
-
-      if (a.x + a.size < -off || a.x > VW + off || a.y + a.size < -off || a.y > VH + off) {
-        despawn(a);
+    
+      function despawn(icon) {
+        icon.el.style.opacity = '0';
+        setTimeout(() => {
+          icon.el?.parentNode?.removeChild(icon.el);
+        }, CFG.fadeMs);
+        const i = icons.indexOf(icon);
+        if (i >= 0) icons.splice(i, 1);
+        spawn("edge");
       }
-    }
-  }
-
-  // Initial spawn
-  for (let i = 0; i < CFG.count; i++) spawn("initial");
-
-  // Animation loop
-  let last = performance.now();
-  function loop(now) {
-    const dt = Math.min(0.04, (now - last) / 1000);
-    last = now;
-    step(dt);
-    requestAnimationFrame(loop);
-  }
-  requestAnimationFrame(loop);
-
-})();
+    
+      function separate() {
+        for (let i = 0; i < icons.length; i++) {
+          for (let j = i + 1; j < icons.length; j++) {
+            const a = icons[i], b = icons[j];
+            const dx = (b.x + b.r) - (a.x + a.r);
+            const dy = (b.y + b.r) - (a.y + a.r);
+            const d = Math.hypot(dx, dy) || 1;
+            const minD = (a.r + b.r) + CFG.sepPad;
+            if (d < minD) {
+              const nx = dx / d, ny = dy / d;
+              const push = (minD - d) * 0.5;
+              a.x -= nx * push; a.y -= ny * push;
+              b.x += nx * push; b.y += ny * push;
+            }
+          }
+        }
+      }
+    
+      function step(dt) {
+        separate();
+        const off = CFG.off;
+        for (const a of icons) {
+          a.targetOmega += (Math.random() - 0.5) * CFG.noise * dt;
+          a.targetOmega = Math.max(-CFG.turnMax, Math.min(CFG.turnMax, a.targetOmega));
+          a.omega += (a.targetOmega - a.omega) * 0.08;
+          a.theta += a.omega * dt;
+          const vx = Math.cos(a.theta) * CFG.speed;
+          const vy = Math.sin(a.theta) * CFG.speed;
+          a.x += vx * dt;
+          a.y += vy * dt;
+          a.el.style.transform = `translate(${a.x.toFixed(2)}px, ${a.y.toFixed(2)}px)`;
+    
+          if (a.x + a.size < -off || a.x > VW + off || a.y + a.size < -off || a.y > VH + off) {
+            despawn(a);
+          }
+        }
+      }
+    
+      for (let i = 0; i < CFG.count; i++) spawn("initial");
+    
+      let last = performance.now();
+      function loop(now) {
+        const dt = Math.min(0.04, (now - last) / 1000);
+        last = now;
+        step(dt);
+        requestAnimationFrame(loop);
+      }
+      requestAnimationFrame(loop);
+    })();
 </script>
+
 </body>
 </html>
