@@ -186,6 +186,275 @@
 <div class="copy">© <span id="year"></span> Intelfy. Alle rettigheder forbeholdes.</div>
 </div>
 </footer>
-<script type="module" src="js/main.js"></script>
-<script type="module" src="js/quiz.js"></script>
-<script type="module" src="js/animation.js"></script>
+
+<script type="module">
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    const docEl = document.documentElement;
+    const header = document.querySelector('.nav');
+    const footer = document.querySelector('.site-footer');
+    function setHeroHeight(){
+      const vp = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      const h = Math.max(320, Math.round(vp - (header?.offsetHeight||0) - (footer?.offsetHeight||0) - 1));
+      docEl.style.setProperty('--hero-avail', h + 'px');
+    }
+    addEventListener('resize', setHeroHeight);
+    addEventListener('orientationchange', setHeroHeight);
+    setHeroHeight();
+
+    function drawArcUnderWord(word, containerSelector) {
+      const container = document.querySelector(containerSelector);
+      if (!container) return;
+      const textNode = [...container.childNodes].find(n => n.nodeType === Node.TEXT_NODE && n.textContent.includes(word));
+      if (!textNode) return;
+      const range = document.createRange();
+      const start = textNode.textContent.indexOf(word);
+      range.setStart(textNode, start);
+      range.setEnd(textNode, start + word.length);
+      const rect = range.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      const relX = rect.left - containerRect.left;
+      const relY = rect.bottom - containerRect.top;
+      const width = rect.width;
+      const height = 12;
+      const fontSize = parseFloat(getComputedStyle(container).fontSize);
+      let svg = document.getElementById("arc-svg");
+      if (!svg) {
+        svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.id = "arc-svg";
+        svg.style.position = "absolute"; svg.style.pointerEvents = "none"; svg.style.zIndex = "1"; svg.style.overflow = "visible";
+        const defs = document.createElementNS(svg.namespaceURI, "defs");
+        const grad = document.createElementNS(svg.namespaceURI, "linearGradient");
+        grad.id = "arcStroke";
+        grad.setAttribute("gradientTransform", "rotate(45 .5 .5)");
+        const stops = [ ["0%", "#FFD86B"], ["25%", "#FF5DB1"], ["50%", "#8A5CFF"], ["100%", "#5BE2FF"] ];
+        for (const [offset, color] of stops) {
+          const stop = document.createElementNS(svg.namespaceURI, "stop");
+          stop.setAttribute("offset", offset); stop.setAttribute("stop-color", color);
+          grad.appendChild(stop);
+        }
+        defs.appendChild(grad); svg.appendChild(defs);
+        const path = document.createElementNS(svg.namespaceURI, "path");
+        path.id = "arc-path";
+        path.setAttribute("d", `M 2 10 C 15 14, 35 -6, ${width - 2} 10`);
+        svg.appendChild(path); container.appendChild(svg);
+      }
+      svg.setAttribute("width", width + 6); svg.setAttribute("height", height);
+      svg.style.left = (relX - 3) + "px"; svg.style.top = (relY - 0.08 * fontSize) + "px";
+      const y = Math.round(height - 0.25 * fontSize);
+      const a = Math.max(5, width * 0.18); const b = Math.max(5, width * 0.52);
+      svg.querySelector("#arc-path").setAttribute("d", `M 2 ${y} C ${a} ${y+4}, ${b} ${y-6}, ${width - 2} ${y}`);
+    }
+    
+    // Run on load and resize
+    drawArcUnderWord("altid", "#hero-title");
+    window.addEventListener("resize", () => drawArcUnderWord("altid", "#hero-title"));
+</script>
+
+<script type="module">
+    const cta = document.getElementById('cta');
+    const btn = cta.querySelector('.actions .btn, .actions button');
+    const eyebrow = cta.querySelector('.eyebrow');
+    const qWrap = cta.querySelector('.qz-area');
+    const qText = cta.querySelector('#qzText');
+    const qAns  = cta.querySelector('#qzAnswers');
+
+    const QUESTIONS = [
+      { q: 'Hvem skal forkæles?', a: ['Min partner','En forælder','En søskende','En ven/kollega'] },
+      { q: 'Hvad er cirka budgettet?', a: ['Under 250 kr.','250–500 kr.','500–1.000 kr.','1.000+ kr.'] }
+    ];
+
+    let index = 0;
+    
+    function setEyebrow(i){ if(eyebrow){ eyebrow.textContent = 'Spørgsmål ' + (i+1); } }
+    function caret(on){ if(on){ if(!qText.querySelector('.qz-caret')){ const c=document.createElement('span'); c.className='qz-caret'; qText.appendChild(c); } }else{ const c=qText.querySelector('.qz-caret'); c && c.remove(); } }
+    function typeIn(text, speed){ return new Promise(resolve=>{ qText.textContent = ''; let i=0; (function step(){ if(i<text.length){ qText.textContent += text[i++]; setTimeout(step, speed); } else { caret(true); resolve(); } })(); }); }
+    function backspaceAll(speed){ return new Promise(resolve=>{ caret(false); (function step(){ const t = qText.textContent; if(t.length){ qText.textContent = t.slice(0,-1); setTimeout(step, speed); } else { resolve(); } })(); }); }
+
+    function showAnswers(list){
+      qAns.classList.remove('qz-fade-out');
+      qAns.innerHTML='';
+      list.forEach((label, i)=>{
+        const b = document.createElement('button');
+        b.type='button'; b.className='qz-pill'; b.innerHTML = '<span>'+label+'</span>';
+        b.style.opacity='0'; b.style.transform='translateY(6px)';
+        b.addEventListener('click', ()=> onSelect(b));
+        qAns.appendChild(b);
+        setTimeout(()=>{
+          b.style.transition='opacity .35s ease, transform .35s ease';
+          b.style.opacity='1'; b.style.transform='translateY(0)';
+        }, 100*i + 120);
+      });
+    }
+
+    async function onSelect(btn){
+      Array.from(qAns.children).forEach(b => b.classList.toggle('qz-selected', b===btn));
+      qAns.classList.add('qz-fade-out');
+      await backspaceAll(22);
+      next();
+    }
+
+    async function next(){
+      if(index >= QUESTIONS.length){
+        caret(false);
+        qText.textContent = 'Tak! Vi finder gaver til dig …';
+        qAns.innerHTML='';
+        return;
+      }
+      const {q, a} = QUESTIONS[index++];
+      setEyebrow(index-1);
+      await typeIn(q, 48);
+      showAnswers(a);
+    }
+
+    btn.addEventListener('click', ()=>{
+      cta.classList.add('qz-active');
+      qWrap.style.display='block';
+      index = 0;
+      next();
+    }, {once:true});
+</script>
+
+<script type="module">
+    const ICONS = Array.from({ length: 19 }, (_, i) => i + 1);
+    const COLORS = ["#FFD86B","#FF5DB1","#8A5CFF","#5BE2FF"];
+    const layer = document.getElementById('icon-layer');
+    const svgNS = "http://www.w3.org/2000/svg";
+    const CFG = { count: 7, minSize: 42, maxSize: 60, speed: 10, turnMax: 0.35, noise: 0.18, sepPad: 6, off: 80, fadeMs: 700 };
+    const icons = [];
+    let VW = innerWidth, VH = innerHeight;
+  
+    function resize(){ VW = Math.max(1, innerWidth); VH = Math.max(1, innerHeight); }
+    addEventListener('resize', resize);
+    addEventListener('orientationchange', resize);
+  
+    const rand = (a,b)=> a + Math.random()*(b-a);
+    const pick = a => a[Math.floor(Math.random()*a.length)];
+  
+    async function spawn(mode="edge") {
+      let name;
+      try {
+        name = pick(ICONS);
+        const color = pick(COLORS);
+        
+        const res = await fetch(`icons/${name}.svg`);
+        if (!res.ok) throw new Error(`SVG fetch failed: ${res.status}`);
+        const svgText = await res.text();
+        
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(svgText, "image/svg+xml");
+        const fetchedSvg = doc.documentElement;
+        const viewBox = fetchedSvg.getAttribute('viewBox');
+  
+        const el = document.createElementNS(svgNS, 'svg');
+        if (viewBox) el.setAttribute('viewBox', viewBox);
+        
+        while(fetchedSvg.firstChild) {
+          const child = fetchedSvg.firstChild;
+          if (child.nodeType === 1) {
+            child.querySelectorAll('[fill]').forEach(f => f.removeAttribute('fill'));
+            child.querySelectorAll('[stroke]').forEach(s => s.removeAttribute('stroke'));
+            child.removeAttribute('fill');
+            child.removeAttribute('stroke');
+          }
+          el.appendChild(child);
+        }
+        el.setAttribute('fill', color);
+        
+        const size = Math.round(rand(CFG.minSize, CFG.maxSize));
+        el.style.width = size + 'px';
+        el.style.height = size + 'px';
+  
+        const r = size / 2;
+        let x, y, thetaBase;
+  
+        if (mode === "initial") {
+          x = rand(20, VW - 20 - size);
+          y = rand(20, VH - 20 - size);
+          thetaBase = rand(-Math.PI, Math.PI);
+        } else {
+          const side = pick(["left", "right", "top", "bottom"]);
+          const off = CFG.off;
+          if (side === "left") { x = -size - off; y = rand(20, VH - 20); }
+          else if (side === "right") { x = VW + off; y = rand(20, VH - 20); }
+          else if (side === "top") { y = -size - off; x = rand(20, VW - 20); }
+          else { y = VH + off; x = rand(20, VW - 20); }
+          const aimX = rand(VW * 0.2, VW * 0.8), aimY = rand(VH * 0.2, VH * 0.8);
+          thetaBase = Math.atan2(aimY - y, aimX - x);
+        }
+  
+        el.style.opacity = '0';
+        el.style.transform = `translate(${x}px, ${y}px)`;
+        layer.appendChild(el);
+        requestAnimationFrame(() => el.style.opacity = String(getComputedStyle(document.documentElement).getPropertyValue('--icon-opacity') || .62));
+  
+        const icon = { el, x, y, r, size, theta: thetaBase, omega: rand(-CFG.turnMax * 0.2, CFG.turnMax * 0.2), targetOmega: 0 };
+        icons.push(icon);
+  
+      } catch (e) {
+        console.error(`Failed to spawn icon "${name}.svg":`, e);
+      }
+    }
+  
+    function despawn(icon) {
+      icon.el.style.opacity = '0';
+      setTimeout(() => {
+        icon.el?.parentNode?.removeChild(icon.el);
+      }, CFG.fadeMs);
+      const i = icons.indexOf(icon);
+      if (i >= 0) icons.splice(i, 1);
+      spawn("edge");
+    }
+  
+    function separate() {
+      for (let i = 0; i < icons.length; i++) {
+        for (let j = i + 1; j < icons.length; j++) {
+          const a = icons[i], b = icons[j];
+          const dx = (b.x + b.r) - (a.x + a.r);
+          const dy = (b.y + b.r) - (a.y + a.r);
+          const d = Math.hypot(dx, dy) || 1;
+          const minD = (a.r + b.r) + CFG.sepPad;
+          if (d < minD) {
+            const nx = dx / d, ny = dy / d;
+            const push = (minD - d) * 0.5;
+            a.x -= nx * push; a.y -= ny * push;
+            b.x += nx * push; b.y += ny * push;
+          }
+        }
+      }
+    }
+  
+    function step(dt) {
+      separate();
+      const off = CFG.off;
+      for (const a of icons) {
+        a.targetOmega += (Math.random() - 0.5) * CFG.noise * dt;
+        a.targetOmega = Math.max(-CFG.turnMax, Math.min(CFG.turnMax, a.targetOmega));
+        a.omega += (a.targetOmega - a.omega) * 0.08;
+        a.theta += a.omega * dt;
+        const vx = Math.cos(a.theta) * CFG.speed;
+        const vy = Math.sin(a.theta) * CFG.speed;
+        a.x += vx * dt;
+        a.y += vy * dt;
+        a.el.style.transform = `translate(${a.x.toFixed(2)}px, ${a.y.toFixed(2)}px)`;
+  
+        if (a.x + a.size < -off || a.x > VW + off || a.y + a.size < -off || a.y > VH + off) {
+          despawn(a);
+        }
+      }
+    }
+  
+    for (let i = 0; i < CFG.count; i++) spawn("initial");
+  
+    let last = performance.now();
+    function loop(now) {
+      const dt = Math.min(0.04, (now - last) / 1000);
+      last = now;
+      step(dt);
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+</script>
+
+</body>
+</html>
