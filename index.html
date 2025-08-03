@@ -447,9 +447,9 @@
       function resize(){ VW = Math.max(1, innerWidth); VH = Math.max(1, innerHeight); layer.setAttribute('viewBox', `0 0 ${VW} ${VH}`); }
       addEventListener('resize', resize); addEventListener('orientationchange', resize); resize();
       const rand = (a,b)=> a + Math.random()*(b-a); const pick = a => a[Math.floor(Math.random()*a.length)];
-      
   async function fromSymbol(name, color) {
     const g = document.createElementNS(svgNS, 'g');
+    let viewBox = '0 0 24 24';
     try {
       const res = await fetch(`icons/${name}.svg`);
       const svgText = await res.text();
@@ -457,35 +457,42 @@
       temp.innerHTML = svgText;
       const fetchedSvg = temp.querySelector('svg');
       if (fetchedSvg) {
+        fetchedSvg.querySelectorAll('[fill]').forEach(el => el.removeAttribute('fill'));
+        viewBox = fetchedSvg.getAttribute('viewBox') || viewBox;
         for (const child of fetchedSvg.children) {
           const clone = child.cloneNode(true);
           clone.setAttribute('stroke', color);
-          clone.setAttribute('fill', color);
+          clone.setAttribute('fill', 'none');
           g.appendChild(clone);
         }
       }
     } catch (e) {
-      console.error("Failed to load /icons/" + name + ".svg", e);
+      console.error(`Failed to load /icons/${name}.svg`, e);
     }
-    return g;
+    return { g, viewBox };
   }
 
   async function spawnIcons() {
     for (let i = 0; i < CFG.count; i++) {
       const name = pick(ICONS);
       const color = pick(COLORS);
-      const g = await fromSymbol(name, color);
+      const { g, viewBox } = await fromSymbol(name, color);
       const svg = document.createElementNS(svgNS, 'svg');
       const size = rand(CFG.minSize, CFG.maxSize);
       svg.setAttribute('width', size);
       svg.setAttribute('height', size);
+      svg.setAttribute('viewBox', viewBox);
+      const x = rand(CFG.off, VW - size - CFG.off);
+      const y = rand(CFG.off, VH - size - CFG.off);
+      svg.setAttribute('x', x);
+      svg.setAttribute('y', y);
       svg.appendChild(g);
       layer.appendChild(svg);
       icons.push(svg);
     }
   }
   spawnIcons();
-})();                  <!-- close the IIFE -->
+})();
 </script>
 </body>
 </html>
